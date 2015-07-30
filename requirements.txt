@@ -9,3 +9,5 @@ pbr==0.10.7
 six==1.9.0
 stevedore==1.2.0
 wsgiref==0.1.2
+iiif2==0.0.31
+flask-cors
