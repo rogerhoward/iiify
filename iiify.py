@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import os.path
-from flask import Flask, send_file, jsonify, abort, request
+import os
+from flask import Flask, send_file, jsonify, abort, request, render_template
 from flask.ext.cors import CORS
 from iiif2 import iiif, web
-from configs import options, cors, cache_root, media_root, cache_expr
+from configs import options, cors, approot, cache_root, media_root, cache_expr
 
 app = Flask(__name__)
 cors = CORS(app) if cors else None
@@ -15,12 +15,25 @@ def resolve(identifier):
     return os.path.join(media_root, identifier)
 
 
+@app.route('/')
+def index():
+    return jsonify({'identifiers': [f for f in os.listdir(media_root)]})
+
+
 @app.route('/<identifier>/info.json')
 def image_info(identifier):
     try:
-        return jsonify(web.info(request.url, resolve(identifier), identifier))
+        uri = "%s%s" % (request.url_root, identifier)
+        return jsonify(web.info(uri, resolve(identifier)))
     except:
         abort(400)
+
+
+@app.route('/<identifier>', defaults={'quality': 'default', 'fmt': 'jpg'})
+@app.route('/<identifier>/view/<quality>.<fmt>')
+def view(identifier, quality="default", fmt="jpg"):
+    uri = '%s%s' % (request.url_root, identifier)
+    return render_template('viewer.html', info=web.info(uri, resolve(identifier)))
 
 
 @app.route('/<identifier>/<region>/<size>/<rotation>/<quality>.<fmt>')
